@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LaserGRBL</RootNamespace>
     <AssemblyName>LaserGRBL</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
@@ -54,6 +54,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -66,6 +67,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
@@ -150,6 +152,9 @@
     </Compile>
     <Compile Include="Generator\ShakeTest.Designer.cs">
       <DependentUpon>ShakeTest.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Gerber\RXGerber.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Hershey\Hershey.cs" />
     <Compile Include="Icons\IIconsLoader.cs" />
@@ -1190,6 +1195,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Generator\ShakeTest.zh-CN.resx">
       <DependentUpon>ShakeTest.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gerber\RXGerber.resx">
+      <DependentUpon>RXGerber.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GrblConfig.ja-JP.resx">
       <DependentUpon>GrblConfig.cs</DependentUpon>

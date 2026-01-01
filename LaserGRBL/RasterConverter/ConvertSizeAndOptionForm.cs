@@ -74,7 +74,7 @@ namespace LaserGRBL.RasterConverter
 				tableWidth = (int)GrblCore.Configuration.TableWidth;
 				tableHeight = (int)GrblCore.Configuration.TableHeight;
 			}
-			catch (Exception ex) { MessageBox.Show(Strings.BoxMachineSizeOutOfRangeText, Strings.BoxMachineSizeOutOfRangeTitle, MessageBoxButtons.OK, MessageBoxIcon.Error); }
+			catch (Exception /*ex*/) { MessageBox.Show(Strings.BoxMachineSizeOutOfRangeText, Strings.BoxMachineSizeOutOfRangeTitle, MessageBoxButtons.OK, MessageBoxIcon.Error); }
 
 			IISizeW.MaxValue = tableWidth;
 			IISizeH.MaxValue = tableHeight;
@@ -105,7 +105,7 @@ namespace LaserGRBL.RasterConverter
 				maxrateX = (int)GrblCore.Configuration.MaxRateX;
 				maxPwm = (int)GrblCore.Configuration.MaxPWM;
 			}
-			catch (Exception ex) {  }
+			catch (Exception /*ex*/) {  }
 
 			IIBorderTracing.MaxValue = IILinearFilling.MaxValue = maxrateX;
 			IIMaxPower.MaxValue = maxPwm;
