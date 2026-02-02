@@ -153,9 +153,7 @@
     <Compile Include="Generator\ShakeTest.Designer.cs">
       <DependentUpon>ShakeTest.cs</DependentUpon>
     </Compile>
-    <Compile Include="Gerber\RXGerber.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="Gerber\RXGerber.cs" />
     <Compile Include="Hershey\Hershey.cs" />
     <Compile Include="Icons\IIconsLoader.cs" />
     <Compile Include="Icons\LegacyIcons.cs" />
@@ -1195,9 +1193,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Generator\ShakeTest.zh-CN.resx">
       <DependentUpon>ShakeTest.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Gerber\RXGerber.resx">
-      <DependentUpon>RXGerber.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GrblConfig.ja-JP.resx">
       <DependentUpon>GrblConfig.cs</DependentUpon>
