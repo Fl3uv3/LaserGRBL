@@ -1,26 +1,14 @@
 //*** Macro definition ******************************************************
 namespace CRXGerber
 {
-    using LaserGRBL;
     using System;
-    //using Cyotek.Drawing;
-    //using SharpGL.SceneGraph;
-    //using SharpGL.SceneGraph.Primitives;
-    //using SharpGL.SceneGraph.Raytracing;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Drawing;
     using System.Drawing.Drawing2D;
-    using System.Globalization;
     using System.IO;
-    using System.Management;
-    using System.Runtime.InteropServices;
-    using System.Runtime.Remoting.Contexts;
-    using System.Security.Cryptography.X509Certificates;
+
     using System.Text.RegularExpressions;
     using System.Windows.Forms;
-
-    //using System.Windows;
 
     //*** Define ***************************************************************
 
@@ -51,10 +39,9 @@ namespace CRXGerber
         private Color m_FlashColor;
         private float m_Dpi;
         private float m_PixelUnitRatio;
+        private bool m_GlobalPolarity;
 
         private List<string> m_PolygonLayer;
-        private List<string> m_ClearLayer;
-        private List<string> m_DarkLayer;
         private List<string> m_MacroApperture;
         private List<string> m_Apperture;
 
@@ -94,19 +81,17 @@ namespace CRXGerber
             m_SizeY = 0;
             m_Dpi = 1000.0f;
             m_PixelUnitRatio = 1000.0f;
+            m_GlobalPolarity = true;
 
             m_PolygonLayer = new List<string>();
-            m_DarkLayer = new List<string>();
-            m_ClearLayer = new List<string>();
             m_MacroApperture = new List<string>();
             m_Apperture = new List<string>();
-
-            List<string> CurrentList = m_PolygonLayer;
 
             float x = 0;
             float y = 0;
             int code = 0;
             int CurrentApperture = 0;
+            bool LayerPolarity = false;
 
             if (GerberFileName != "")
             {
@@ -116,294 +101,327 @@ namespace CRXGerber
                     for (int i = 0; i < lines.Length; i++)
                     {
                         string Cmd = lines[i];
-                        if (Cmd.Contains("%FS"))
+                        if (Cmd != "")
                         {
-                            for (int j = 3; j < Cmd.Length; j++)
+                            if (Cmd.Contains("%FS"))
                             {
-                                /*if (Cmd[j] == 'L')
-									m_IsLeading = true;
+                                for (int j = 3; j < Cmd.Length; j++)
+                                {
+                                    /*if (Cmd[j] == 'L')
+										m_IsLeading = true;
 
-								if (Cmd[j] == 'T')
-									m_IsTrailing = true;
+									if (Cmd[j] == 'T')
+										m_IsTrailing = true;
 
-								if (Cmd[j] == 'D')
-									m_IsDecimal = true;
+									if (Cmd[j] == 'D')
+										m_IsDecimal = true;
 								
-								if (Cmd[j] == 'A')
-									m_IsAbsolute = true;
+									if (Cmd[j] == 'A')
+										m_IsAbsolute = true;
 
-								if (Cmd[j] == 'I')
-                                    m_IsAbsolute = false;
-								*/
-                                if (Cmd[j] == 'X' || Cmd[j] == 'Y' || Cmd[j] == 'Z')
-                                {
-                                    if (Cmd[j + 1] == '2')
-                                        m_FormatRatio[Cmd[j] - 0x58] = Cmd[j + 2] switch
-                                        {
-                                            '3' => 1.0f,
-                                            '4' => 0.1f,
-                                            '5' => 0.01f,
-                                            '6' => 0.001f,
-                                            _ => 0.0f
-                                        };
-                                    if (Cmd[j + 1] == '4')
-                                        m_FormatRatio[Cmd[j] - 0x58] = Cmd[j + 2] switch
-                                        {
-                                            '2' => 0.01f,
-                                            '3' => 0.001f,
-                                            '4' => 0.0001f,
-                                            '5' => 0.00001f,
-                                            '6' => 0.000001f,
-                                            _ => 0.0f
-                                        };
-                                    j += 2;
-                                }
-                            }
-                        }
-
-                        if (Cmd == "G70*" || Cmd == "%MOIN*%")
-                        {
-                            m_IsInch = true;
-                            m_PixelUnitRatio = 1000.0f;
-                        }
-                        if (Cmd == "G71*" || Cmd == "%MOMM*%")
-                        {
-                            m_IsInch = false;
-                            m_PixelUnitRatio = 39.37f;
-                        }
-                        /*if (Cmd == "G01*")
-							m_IsLinear = true;
-						if (Cmd == "G02*" || Cmd == "G20*" || Cmd == "G21*")
-							m_IsClockWise = true;
-						if (Cmd == "G03*" || Cmd == "G30*" || Cmd == "G31*")
-							m_IsCounterClockWise = true;
-						if (Cmd == "G75*")
-							m_Is360ON = true;
-						if (Cmd == "G74*")
-							m_Is360OFF = true;
-						if (Cmd == "G90*")
-							m_IsAbsolute = true;
-						if (Cmd == "G91*")
-							m_IsIncremental = true;
-						*/
-                        if (Cmd == "%LPC*%")
-                            CurrentList = m_ClearLayer;
-
-                        if (Cmd == "%LPD*%")
-                            CurrentList = m_DarkLayer;
-
-                        if (Cmd == "G36*")
-                            CurrentList.Add("G36");
-
-                        if (Cmd == "G37*")
-                            CurrentList.Add("G37");
-
-                        if (Cmd.Contains("%AM"))
-                        {
-                            Regex regx = new Regex(@"%AM(.*)\*");
-                            Match match = regx.Match(Cmd);
-                            string MacroName = "";
-
-                            if (match.Success)
-                                MacroName = match.Groups[1].Value;
-
-                            string TmpAppertureMacro = MacroName + "\n";
-
-                            do
-                            {
-                                i++;
-                                string TmpBuffer = lines[i];
-                                TmpBuffer = TmpBuffer.TrimEnd('%');
-                                TmpBuffer = TmpBuffer.TrimEnd('*');
-                                TmpAppertureMacro += TmpBuffer + "\n";
-                            }
-                            while (!lines[i].Contains("%"));
-
-                            TmpAppertureMacro = TmpAppertureMacro.TrimEnd('\n');
-                            m_MacroApperture.Add(TmpAppertureMacro);
-                        }
-
-                        if (Cmd.Contains("%AD"))
-                        {
-                            char AppLetter = ' ';
-                            int AppNum = -1;
-                            string AppertureName = " ";
-                            string Param = " ";
-                            float[] Params = new float[0];
-                            float Sx = 0.0f;
-                            float Sy = 0.0f;
-                            float HoleSx = 0.0f;
-                            float HoleSy = 0.0f;
-                            int NbSide = 0;
-                            string TmpAppertureMacro = "";
-
-                            //%AD<AppLetter><AppNum><Shape>,
-                            Regex regx = new Regex(@"^%AD([A-Z])(\d+)([A-Za-z0-9]+)(?:,([^*]+))?\*%$");
-                            Match match = regx.Match(Cmd);
-
-                            if (match.Success)
-                            {
-                                AppLetter = match.Groups[1].Value[0];
-                                AppNum = int.Parse(match.Groups[2].Value);
-                                AppertureName = match.Groups[3].Value;
-                                Param = match.Groups[4].Value;
-                                if (Param.Length != 0)
-                                    Params = Array.ConvertAll(Param.Split('X'), float.Parse);
-                            }
-                            if (AppertureName.Length == 1)
-                            {
-                                if (AppertureName[0] == 'C')
-                                {
-                                    if (Params.Length >= 1)
-                                        Sx = Params[0];
-
-                                    TmpAppertureMacro += string.Format("1,1,{0},0,0\n", Sx);
-
-                                    if (Params.Length >= 2)
-                                        HoleSx = Params[1];
-
-                                    if (Params.Length >= 3)
-                                        HoleSy = Params[2];
-                                }
-
-                                if (AppertureName[0] == 'R' || AppertureName[0] == 'O')
-                                {
-                                    if (Params.Length >= 2)
+									if (Cmd[j] == 'I')
+										m_IsAbsolute = false;
+									*/
+                                    if (Cmd[j] == 'X' || Cmd[j] == 'Y' || Cmd[j] == 'Z')
                                     {
-                                        Sx = Params[0];
-                                        Sy = Params[1];
+                                        if (Cmd[j + 1] == '2')
+                                        {
+                                            float Ratio = 0.0f;
+
+                                            if (Cmd[j + 2] == '3')
+                                                Ratio = 1.0f;
+                                            else if (Cmd[j + 2] == '4')
+                                                Ratio = 0.1f;
+                                            else if (Cmd[j + 2] == '5')
+                                                Ratio = 0.01f;
+                                            else if (Cmd[j + 2] == '6')
+                                                Ratio = 0.001f;
+
+                                            m_FormatRatio[Cmd[j] - 0x58] = Ratio;
+
+                                        }
+                                        if (Cmd[j + 1] == '4')
+                                        {
+                                            float Ratio = 0.0f;
+
+                                            if (Cmd[j + 2] == '2')
+                                                Ratio = 0.01f;
+                                            else if (Cmd[j + 2] == '3')
+                                                Ratio = 0.001f;
+                                            else if (Cmd[j + 2] == '4')
+                                                Ratio = 0.0001f;
+                                            else if (Cmd[j + 2] == '5')
+                                                Ratio = 0.00001f;
+                                            else if (Cmd[j + 2] == '6')
+                                                Ratio = 0.000001f;
+
+                                            m_FormatRatio[Cmd[j] - 0x58] = Ratio;
+
+                                        }
+                                        j += 2;
+                                    }
+                                }
+                            }
+
+                            if (Cmd == "G70*" || Cmd == "%MOIN*%")
+                            {
+                                m_IsInch = true;
+                                m_PixelUnitRatio = 1000.0f;
+                            }
+                            if (Cmd == "G71*" || Cmd == "%MOMM*%")
+                            {
+                                m_IsInch = false;
+                                m_PixelUnitRatio = 39.37f;
+                            }
+                            /*if (Cmd == "G01*")
+								m_IsLinear = true;
+							if (Cmd == "G02*" || Cmd == "G20*" || Cmd == "G21*")
+								m_IsClockWise = true;
+							if (Cmd == "G03*" || Cmd == "G30*" || Cmd == "G31*")
+								m_IsCounterClockWise = true;
+							if (Cmd == "G75*")
+								m_Is360ON = true;
+							if (Cmd == "G74*")
+								m_Is360OFF = true;
+							if (Cmd == "G90*")
+								m_IsAbsolute = true;
+							if (Cmd == "G91*")
+								m_IsIncremental = true;
+							*/
+
+                            if (Cmd == "%IPPOS*%")
+                                m_GlobalPolarity = true;
+
+                            if (Cmd == "%IPNEG*%")
+                                m_GlobalPolarity = false;
+
+                            if (Cmd == "%LPC*%")
+                                LayerPolarity = true;
+
+                            if (Cmd == "%LPD*%")
+                                LayerPolarity = false;
+
+                            if (Cmd == "G36*")
+                                m_PolygonLayer.Add("G36");
+
+                            if (Cmd == "G37*")
+                                m_PolygonLayer.Add("G37");
+
+                            if (Cmd.Contains("%AM"))
+                            {
+                                Regex regx = new Regex(@"%AM(.*)\*");
+                                Match match = regx.Match(Cmd);
+                                string MacroName = "";
+
+                                if (match.Success)
+                                    MacroName = match.Groups[1].Value;
+
+                                string TmpAppertureMacro = MacroName + "\n";
+
+                                do
+                                {
+                                    i++;
+                                    string TmpBuffer = lines[i];
+                                    TmpBuffer = TmpBuffer.TrimEnd('%');
+                                    TmpBuffer = TmpBuffer.TrimEnd('*');
+                                    TmpAppertureMacro += TmpBuffer + "\n";
+                                }
+                                while (!lines[i].Contains("%"));
+
+                                TmpAppertureMacro = TmpAppertureMacro.TrimEnd('\n');
+                                m_MacroApperture.Add(TmpAppertureMacro);
+                            }
+
+                            if (Cmd.Contains("%AD"))
+                            {
+                                char AppLetter = ' ';
+                                int AppNum = -1;
+                                string AppertureName = " ";
+                                string Param = " ";
+                                float[] Params = new float[0];
+                                float Sx = 0.0f;
+                                float Sy = 0.0f;
+                                float HoleSx = 0.0f;
+                                float HoleSy = 0.0f;
+                                int NbSide = 0;
+                                string TmpAppertureMacro = "";
+
+                                //%AD<AppLetter><AppNum><Shape>,
+                                Regex regx = new Regex(@"^%AD([A-Z])(\d+)([A-Za-z0-9]+)(?:,([^*]+))?\*%$");
+                                Match match = regx.Match(Cmd);
+
+                                if (match.Success)
+                                {
+                                    AppLetter = match.Groups[1].Value[0];
+                                    AppNum = int.Parse(match.Groups[2].Value);
+                                    AppertureName = match.Groups[3].Value;
+                                    Param = match.Groups[4].Value;
+                                    if (Param.Length != 0)
+                                        Params = Array.ConvertAll(Param.Split('X'), float.Parse);
+                                }
+                                if (AppertureName.Length == 1)
+                                {
+                                    if (AppertureName[0] == 'C')
+                                    {
+                                        if (Params.Length >= 1)
+                                            Sx = Params[0];
+
+                                        TmpAppertureMacro += string.Format("1,1,{0},0,0\n", Sx);
+
+                                        if (Params.Length >= 2)
+                                            HoleSx = Params[1];
+
+                                        if (Params.Length >= 3)
+                                            HoleSy = Params[2];
                                     }
 
-                                    if (AppertureName[0] == 'R')
-                                        TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
-                                    else
+                                    if (AppertureName[0] == 'R' || AppertureName[0] == 'O')
                                     {
-                                        float d = 0.0f;
-                                        float PosX = 0.0f;
-                                        float PosY = 0.0f;
-                                        if (Sx < Sy)
+                                        if (Params.Length >= 2)
                                         {
-                                            d = Sx;
-                                            Sy -= d;
-                                            PosY = Sy / 2;
+                                            Sx = Params[0];
+                                            Sy = Params[1];
                                         }
+
+                                        if (AppertureName[0] == 'R')
+                                            TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
                                         else
                                         {
-                                            d = Sy;
-                                            Sx -= d;
-                                            PosX = Sx / 2;
+                                            float d = 0.0f;
+                                            float PosX = 0.0f;
+                                            float PosY = 0.0f;
+                                            if (Sx < Sy)
+                                            {
+                                                d = Sx;
+                                                Sy -= d;
+                                                PosY = Sy / 2;
+                                            }
+                                            else
+                                            {
+                                                d = Sy;
+                                                Sx -= d;
+                                                PosX = Sx / 2;
+                                            }
+
+                                            TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
+                                            TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, -PosX, -PosY);
+                                            TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, PosX, PosY);
                                         }
 
-                                        TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
-                                        TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, -PosX, -PosY);
-                                        TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, PosX, PosY);
+                                        if (Params.Length >= 3)
+                                            HoleSx = Params[2];
+
+                                        if (Params.Length >= 4)
+                                            HoleSy = Params[3];
+
                                     }
 
-                                    if (Params.Length >= 3)
-                                        HoleSx = Params[2];
-
-                                    if (Params.Length >= 4)
-                                        HoleSy = Params[3];
-
-                                }
-
-                                if (AppertureName[0] == 'P')
-                                {
-                                    if (Params.Length >= 2)
+                                    if (AppertureName[0] == 'P')
                                     {
-                                        Sx = Params[0];
-                                        NbSide = (int)Params[1];
-                                        float Radius = 0.04f;
-                                        PointF Center = new PointF(20, 20);
+                                        if (Params.Length >= 2)
+                                        {
+                                            Sx = Params[0];
+                                            NbSide = (int)Params[1];
+                                            float Radius = 0.04f;
+                                            PointF Center = new PointF(20, 20);
 
-                                        PointF[] polygonPoints = CreateRegularPolygonPoints(Center, NbSide, Radius, 0.0f);
+                                            PointF[] polygonPoints = CreateRegularPolygonPoints(Center, NbSide, Radius, 0.0f);
+                                        }
                                     }
-                                }
 
-                                if (HoleSy != 0.0f)
-                                    TmpAppertureMacro += string.Format("21,0,{0},{1},0,0,0.0\n", HoleSx, HoleSy);
-                                else if (HoleSx != 0.0f)
-                                    TmpAppertureMacro += string.Format("1,0,{0},0,0\n", HoleSx);
-                            }
-                            else
-                            {
-                                for (int MacroId = 0; MacroId < m_MacroApperture.Count; MacroId++)
+                                    if (HoleSy != 0.0f)
+                                        TmpAppertureMacro += string.Format("21,0,{0},{1},0,0,0.0\n", HoleSx, HoleSy);
+                                    else if (HoleSx != 0.0f)
+                                        TmpAppertureMacro += string.Format("1,0,{0},0,0\n", HoleSx);
+                                }
+                                else
                                 {
-                                    if (m_MacroApperture[MacroId].Contains(AppertureName))
+                                    for (int MacroId = 0; MacroId < m_MacroApperture.Count; MacroId++)
                                     {
-                                        TmpAppertureMacro = Regex.Replace(m_MacroApperture[MacroId], @"^.*\n", "");
-                                        MacroId = m_MacroApperture.Count;
+                                        if (m_MacroApperture[MacroId].Contains(AppertureName))
+                                        {
+                                            TmpAppertureMacro = Regex.Replace(m_MacroApperture[MacroId], @"^.*\n", "");
+                                            MacroId = m_MacroApperture.Count;
+                                        }
                                     }
+
+                                    for (int MacroParam = 0; MacroParam < Params.Length; MacroParam++)
+                                    {
+                                        string MacroName = string.Format("${0}", MacroParam + 1);
+                                        TmpAppertureMacro = TmpAppertureMacro.Replace(MacroName, Params[MacroParam].ToString());
+                                    }
+
                                 }
 
-                                for (int MacroParam = 0; MacroParam < Params.Length; MacroParam++)
+                                if (TmpAppertureMacro != "")
                                 {
-                                    string MacroName = string.Format("${0}", MacroParam + 1);
-                                    TmpAppertureMacro = TmpAppertureMacro.Replace(MacroName, Params[MacroParam].ToString());
+                                    TmpAppertureMacro = TmpAppertureMacro.TrimEnd('\n');
+                                    string Buffer = string.Format("{0}{1} -> {2}", AppLetter, AppNum, TmpAppertureMacro);
+                                    m_Apperture.Add(Buffer);
                                 }
-
                             }
 
-                            if (TmpAppertureMacro != "")
+                            //if (Cmd == "M02*")
+                            //m_IsEOF = true;
+
+                            if (Cmd[0] == 'X' || Cmd[0] == 'Y' || Cmd[0] == 'D' || Cmd.Contains("G54"))
                             {
-                                TmpAppertureMacro = TmpAppertureMacro.TrimEnd('\n');
-                                string Buffer = string.Format("{0}{1} -> {2}", AppLetter, AppNum, TmpAppertureMacro);
-                                m_Apperture.Add(Buffer);
-                            }
-                        }
+                                string Buffer = "";
 
-                        //if (Cmd == "M02*")
-                        //m_IsEOF = true;
+                                Regex regx = new Regex(@"X(-?[0-9]+(?:\.[0-9]+)?)");
+                                Match match = regx.Match(Cmd);
 
-                        if (Cmd[0] == 'X' || Cmd.Contains("D03"))
-                        {
-                            string Buffer = "";
-
-                            //X<xx>Y<yy>D<code>
-                            Regex regx = new Regex(@"X(-?\d+)Y(-?\d+)D(-?\d+)");
-                            Match match = regx.Match(Cmd);
-
-                            if (match.Success)
-                            {
-                                x = float.Parse(match.Groups[1].Value) * m_FormatRatio[0];
-                                y = float.Parse(match.Groups[2].Value) * m_FormatRatio[1];
-                                code = int.Parse(match.Groups[3].Value);
-
-                                if (!m_IsInch)
+                                if (match.Success)
                                 {
-                                    x *= m_PixelUnitRatio;
-                                    y *= m_PixelUnitRatio;
+                                    x = float.Parse(match.Groups[1].Value) * m_FormatRatio[0];
+                                    if (!m_IsInch)
+                                        x *= m_PixelUnitRatio;
+
+                                    if (x > m_MaxX)
+                                        m_MaxX = x;
+                                    if (x < m_MinX)
+                                        m_MinX = x;
                                 }
 
+                                regx = new Regex(@"Y(-?[0-9]+(?:\.[0-9]+)?)");
+                                match = regx.Match(Cmd);
+
+                                if (match.Success)
+                                {
+                                    y = float.Parse(match.Groups[1].Value) * m_FormatRatio[1];
+                                    if (!m_IsInch)
+                                        y *= m_PixelUnitRatio;
+
+                                    if (y > m_MaxY)
+                                        m_MaxY = y;
+                                    if (y < m_MinY)
+                                        m_MinY = y;
+                                }
+
+                                //X<xx>Y<yy>D<code>
+                                regx = new Regex(@"D(-?\d+)");
+                                match = regx.Match(Cmd);
+
+                                if (match.Success)
+                                {
+                                    code = int.Parse(match.Groups[1].Value);
+
+                                    if (code > 3)
+                                        CurrentApperture = code;
+                                }
+
+                                if (code == 1)
+                                    Buffer = string.Format("   T-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
+
+                                if (code == 2)
+                                    Buffer = string.Format("   M-> D2 ({0}, {1})", x, y);
+
+                                if (code == 3)
+                                    Buffer = string.Format("   F-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
+
+                                if (Buffer != "")
+                                    m_PolygonLayer.Add(Buffer);
                             }
-
-                            if (code == 1)
-                                Buffer = string.Format("   T-> D{0} ({1}, {2})", CurrentApperture, x, y);
-
-                            if (code == 2)
-                                Buffer = string.Format("   M-> D2 ({0}, {1})", x, y);
-
-                            if (Cmd.Contains("D03"))
-                                Buffer = string.Format("   F-> D{0} ({1}, {2})", CurrentApperture, x, y);
-
-                            CurrentList.Add(Buffer);
-
-                            if (x > m_MaxX)
-                                m_MaxX = x;
-                            if (y > m_MaxY)
-                                m_MaxY = y;
-                            if (x < m_MinX)
-                                m_MinX = x;
-                            if (y < m_MinY)
-                                m_MinY = y;
-                        }
-                        else if (Cmd[0] == 'D')
-                        {
-                            //D<Apperture>
-                            Regex regx = new Regex(@"D(-?\d+)");
-                            Match match = regx.Match(Cmd);
-
-                            CurrentApperture = int.Parse(match.Groups[1].Value);
                         }
                     }
                 }
@@ -431,25 +449,20 @@ namespace CRXGerber
         {
             m_FinalImg = new Bitmap((int)m_SizeX, (int)m_SizeY);
             m_FinalImg.SetResolution(m_Dpi, m_Dpi);
+
             if (m_GuiImage != null)
                 m_GuiImage.Image = m_FinalImg;
 
-            //CRXGerberForm GerberConfig = new CRXGerberForm();
-            //GerberConfig.ShowDialog();
-
-            Graphics g = Graphics.FromImage(m_FinalImg);
             m_ClearColor = Color.Black;
             m_FlashColor = Color.White;
 
-            g.Clear(m_ClearColor);
-
-            DrawLayer(m_PolygonLayer, false, true);
-            DrawLayer(m_ClearLayer, true);
-            DrawLayer(m_DarkLayer, false, true);
+            Graphics g = Graphics.FromImage(m_FinalImg);
+            g.Clear(m_GlobalPolarity ? m_ClearColor : m_FlashColor);
+            DrawLayer(m_PolygonLayer);
 
             //m_FinalImg.Save("E:\\Final.png");
         }
-        private void DrawLayer(List<string> DCodeList, bool Invert, bool Flashpart = false)
+        private void DrawLayer(List<string> DCodeList)
         {
             List<PointF> Polygon = new List<PointF>();
 
@@ -457,6 +470,7 @@ namespace CRXGerber
             int DrawTools = -1;
             char Func = '?';
             int PolMode = 0, First = 0;
+            bool Polarity = false;
 
             for (int i = 0; i < DCodeList.Count; i++)
             {
@@ -472,7 +486,7 @@ namespace CRXGerber
                 if (Cmd == "G37")
                 {
                     if (Polygon.Count != 0)
-                        DrawFillPoly(Polygon, Invert);
+                        DrawFillPoly(Polygon, Polarity);
                     First = 0;
                     PolMode = 0;
                 }
@@ -490,6 +504,12 @@ namespace CRXGerber
                         xx = float.Parse(match.Groups[3].Value) - m_MinX;
                         yy = m_SizeY - (float.Parse(match.Groups[4].Value) - m_MinY);
                     }
+
+                    regx = new Regex(@"Pol:(.*)");
+                    match = regx.Match(Cmd);
+
+                    if (match.Success)
+                        Polarity = bool.Parse(match.Groups[1].Value);
 
                     if (Func == 'M')
                     {
@@ -519,7 +539,7 @@ namespace CRXGerber
                                 Param = match.Groups[2].Value;
                             }
 
-                            if (Aperture == DrawTools & Flashpart)
+                            if (Aperture == DrawTools)
                             {
                                 string[] Multiline = Param.Split('\n');
 
@@ -535,7 +555,7 @@ namespace CRXGerber
                                             FinalLine += ApertureMacroEval(SplitEval[SplitElem]) + ",";
 
                                         FinalLine = FinalLine.Trim(',');
-                                        Flash(xx, yy, FinalLine);
+                                        Flash(xx, yy, FinalLine, Polarity);
                                     }
                                 }
 
@@ -553,32 +573,30 @@ namespace CRXGerber
                         {
                             float Size = 1.0f;
 
-                            if (Flashpart)
+                            for (int j = 0; j < m_Apperture.Count; j++)
                             {
-                                for (int j = 0; j < m_Apperture.Count; j++)
+                                string TmpStr = m_Apperture[j];
+
+                                //D<Apperture> -> <Param>
+                                regx = new Regex(@"D(-?\d+) -> (.*)");
+                                match = regx.Match(TmpStr);
+
+                                if (match.Success)
                                 {
-                                    string TmpStr = m_Apperture[j];
-
-                                    //D<Apperture> -> <Param>
-                                    regx = new Regex(@"D(-?\d+) -> (.*)");
-                                    match = regx.Match(TmpStr);
-
-                                    if (match.Success)
+                                    if (int.Parse(match.Groups[1].Value) == DrawTools)
                                     {
-                                        if (int.Parse(match.Groups[1].Value) == DrawTools)
-                                        {
-                                            string Param = match.Groups[2].Value;
-                                            string[] Params = Param.Split(',');
-                                            float[] fParams = Array.ConvertAll(Params, float.Parse);
+                                        string Param = match.Groups[2].Value;
+                                        string[] Params = Param.Split(',');
+                                        float[] fParams = Array.ConvertAll(Params, float.Parse);
 
-                                            Size = fParams[2] * m_PixelUnitRatio;
-                                            j = m_Apperture.Count;
-                                        }
+                                        Size = fParams[2] * m_PixelUnitRatio;
+                                        j = m_Apperture.Count;
                                     }
                                 }
                             }
 
-                            Trace(x, y, xx, yy, Invert, Size);
+
+                            Trace(x, y, xx, yy, Polarity, Size);
 
                             x = xx;
                             y = yy;
@@ -588,18 +606,18 @@ namespace CRXGerber
             }
         }
 
-        private void DrawFillPoly(List<PointF> Polygon, bool Invert)
+        private void DrawFillPoly(List<PointF> Polygon, bool Polarity)
         {
-            Color Col = Invert ? m_ClearColor : m_FlashColor;
+            Color Col = (m_GlobalPolarity == Polarity) ? m_ClearColor : m_FlashColor;
             Graphics g = Graphics.FromImage(m_FinalImg);
             Brush brush = new SolidBrush(Col);
 
             g.FillPolygon(brush, Polygon.ToArray());
         }
 
-        private void Trace(float x, float y, float xx, float yy, bool Invert, float Size)
+        private void Trace(float x, float y, float xx, float yy, bool Polarity, float Size)
         {
-            Color Col = Invert ? m_ClearColor : m_FlashColor;
+            Color Col = (m_GlobalPolarity == Polarity) ? m_ClearColor : m_FlashColor;
             Graphics g = Graphics.FromImage(m_FinalImg);
             Brush brush = new SolidBrush(Col);
             Pen pen = new Pen(Col, Size);
@@ -611,13 +629,11 @@ namespace CRXGerber
             g.FillEllipse(brush, xx - Ray, yy - Ray, Size, Size);
         }
 
-        private void Flash(float X, float Y, string Param)
+        private void Flash(float X, float Y, string Param, bool Polarity)
         {
-            //string[] Params = Param.Split(',');
             float[] fParams = Array.ConvertAll(Param.Split(','), float.Parse);
 
-            Color Col = fParams[1] == 0.0f ? m_ClearColor : m_FlashColor;
-
+            Color Col = ((m_GlobalPolarity == Polarity) == (fParams[1] != 0.0f)) ? m_ClearColor : m_FlashColor;
             Graphics g = Graphics.FromImage(m_FinalImg);
             Brush brush = new SolidBrush(Col);
 
@@ -720,7 +736,7 @@ namespace CRXGerber
                         nombre += expr[i++];
 
                     i--;
-                    valeurs.Push(float.Parse(nombre, CultureInfo.InvariantCulture));
+                    valeurs.Push(float.Parse(nombre));
                 }
                 else if (c == '(')
                     operateurs.Push(c);
@@ -751,26 +767,34 @@ namespace CRXGerber
 
         static float ApplyOperation(float a, float b, char op)
         {
-            return op switch
-            {
-                '+' => b + a,
-                '-' => b - a,
-                '*' => b * a,
-                '/' => a == 0 ? throw new DivideByZeroException("Division by zero") : b / a,
-                _ => throw new ArgumentException("Invalid Operation")
-            };
+            float Eval = 0.0f;
+
+            if (op == '+')
+                Eval = b + a;
+            else if (op == '-')
+                Eval = b - a;
+            else if (op == '*')
+                Eval = b * a;
+            else if (op == '/' && a != 0)
+                Eval = b / a;
+
+            return Eval;
         }
 
         static int Priority(char op)
         {
-            return op switch
-            {
-                '+' => 1,
-                '-' => 1,
-                '*' => 2,
-                '/' => 2,
-                _ => 0
-            };
+            int Prior = 0;
+
+            if (op == '+')
+                Prior = 1;
+            else if (op == '-')
+                Prior = 1;
+            else if (op == '*')
+                Prior = 2;
+            else if (op == '/')
+                Prior = 2;
+
+            return Prior;
         }
 
         bool IsNegNumber(string expr, int index)
