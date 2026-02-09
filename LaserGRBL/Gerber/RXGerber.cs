@@ -5,6 +5,7 @@ namespace CRXGerber
     using System.Collections.Generic;
     using System.Drawing;
     using System.Drawing.Drawing2D;
+    using System.Globalization;
     using System.IO;
 
     using System.Text.RegularExpressions;
@@ -257,7 +258,7 @@ namespace CRXGerber
                                     AppertureName = match.Groups[3].Value;
                                     Param = match.Groups[4].Value;
                                     if (Param.Length != 0)
-                                        Params = Array.ConvertAll(Param.Split('X'), float.Parse);
+                                        Params = Array.ConvertAll(Param.Split('X'), s => float.Parse(s, CultureInfo.InvariantCulture));
                                 }
                                 if (AppertureName.Length == 1)
                                 {
@@ -266,7 +267,7 @@ namespace CRXGerber
                                         if (Params.Length >= 1)
                                             Sx = Params[0];
 
-                                        TmpAppertureMacro += string.Format("1,1,{0},0,0\n", Sx);
+                                        TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "1,1,{0},0,0\n", Sx);
 
                                         if (Params.Length >= 2)
                                             HoleSx = Params[1];
@@ -284,7 +285,7 @@ namespace CRXGerber
                                         }
 
                                         if (AppertureName[0] == 'R')
-                                            TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
+                                            TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "21,1,{0},{1},0,0,0.0\n", Sx, Sy);
                                         else
                                         {
                                             float d = 0.0f;
@@ -303,9 +304,9 @@ namespace CRXGerber
                                                 PosX = Sx / 2;
                                             }
 
-                                            TmpAppertureMacro += string.Format("21,1,{0},{1},0,0,0.0\n", Sx, Sy);
-                                            TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, -PosX, -PosY);
-                                            TmpAppertureMacro += string.Format("1,1,{0},{1},{2}\n", d, PosX, PosY);
+                                            TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "21,1,{0},{1},0,0,0.0\n", Sx, Sy);
+                                            TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "1,1,{0},{1},{2}\n", d, -PosX, -PosY);
+                                            TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "1,1,{0},{1},{2}\n", d, PosX, PosY);
                                         }
 
                                         if (Params.Length >= 3)
@@ -330,9 +331,9 @@ namespace CRXGerber
                                     }
 
                                     if (HoleSy != 0.0f)
-                                        TmpAppertureMacro += string.Format("21,0,{0},{1},0,0,0.0\n", HoleSx, HoleSy);
+                                        TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "21,0,{0},{1},0,0,0.0\n", HoleSx, HoleSy);
                                     else if (HoleSx != 0.0f)
-                                        TmpAppertureMacro += string.Format("1,0,{0},0,0\n", HoleSx);
+                                        TmpAppertureMacro += string.Format(CultureInfo.InvariantCulture, "1,0,{0},0,0\n", HoleSx);
                                 }
                                 else
                                 {
@@ -348,7 +349,7 @@ namespace CRXGerber
                                     for (int MacroParam = 0; MacroParam < Params.Length; MacroParam++)
                                     {
                                         string MacroName = string.Format("${0}", MacroParam + 1);
-                                        TmpAppertureMacro = TmpAppertureMacro.Replace(MacroName, Params[MacroParam].ToString());
+                                        TmpAppertureMacro = TmpAppertureMacro.Replace(MacroName, Params[MacroParam].ToString(CultureInfo.InvariantCulture));
                                     }
 
                                 }
@@ -411,13 +412,13 @@ namespace CRXGerber
                                 }
 
                                 if (code == 1)
-                                    Buffer = string.Format("   T-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
+                                    Buffer = string.Format(CultureInfo.InvariantCulture, "   T-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
 
                                 if (code == 2)
-                                    Buffer = string.Format("   M-> D2 ({0}, {1})", x, y);
+                                    Buffer = string.Format(CultureInfo.InvariantCulture, "   M-> D2 ({0}, {1})", x, y);
 
                                 if (code == 3)
-                                    Buffer = string.Format("   F-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
+                                    Buffer = string.Format(CultureInfo.InvariantCulture, "   F-> D{0} ({1}, {2}) Pol:{3}", CurrentApperture, x, y, LayerPolarity);
 
                                 if (Buffer != "")
                                     m_PolygonLayer.Add(Buffer);
@@ -501,8 +502,8 @@ namespace CRXGerber
                     {
                         Func = match.Groups[1].Value[0];
                         DrawTools = int.Parse(match.Groups[2].Value);
-                        xx = float.Parse(match.Groups[3].Value) - m_MinX;
-                        yy = m_SizeY - (float.Parse(match.Groups[4].Value) - m_MinY);
+                        xx = float.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture) - m_MinX;
+                        yy = m_SizeY - (float.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture) - m_MinY);
                     }
 
                     regx = new Regex(@"Pol:(.*)");
@@ -587,7 +588,7 @@ namespace CRXGerber
                                     {
                                         string Param = match.Groups[2].Value;
                                         string[] Params = Param.Split(',');
-                                        float[] fParams = Array.ConvertAll(Params, float.Parse);
+                                        float[] fParams = Array.ConvertAll(Params, s => float.Parse(s, CultureInfo.InvariantCulture));
 
                                         Size = fParams[2] * m_PixelUnitRatio;
                                         j = m_Apperture.Count;
@@ -631,7 +632,7 @@ namespace CRXGerber
 
         private void Flash(float X, float Y, string Param, bool Polarity)
         {
-            float[] fParams = Array.ConvertAll(Param.Split(','), float.Parse);
+            float[] fParams = Array.ConvertAll(Param.Split(','), s => float.Parse(s, CultureInfo.InvariantCulture));
 
             Color Col = ((m_GlobalPolarity == Polarity) == (fParams[1] != 0.0f)) ? m_ClearColor : m_FlashColor;
             Graphics g = Graphics.FromImage(m_FinalImg);
@@ -736,7 +737,7 @@ namespace CRXGerber
                         nombre += expr[i++];
 
                     i--;
-                    valeurs.Push(float.Parse(nombre));
+                    valeurs.Push(float.Parse(nombre, CultureInfo.InvariantCulture));
                 }
                 else if (c == '(')
                     operateurs.Push(c);
@@ -762,7 +763,7 @@ namespace CRXGerber
             valeurs.Clear();
             operateurs.Clear();
 
-            return resultat.ToString();
+            return resultat.ToString(CultureInfo.InvariantCulture);
         }
 
         static float ApplyOperation(float a, float b, char op)
