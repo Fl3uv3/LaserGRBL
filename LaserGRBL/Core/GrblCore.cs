@@ -32,8 +32,8 @@ namespace LaserGRBL
 		//public static PSHelper.PSFile MaterialDB = PSHelper.PSFile.Load();
 		public static PSHelper.MaterialDB MaterialDB = PSHelper.MaterialDB.Load();
 
-		public static string GCODE_STD_HEADER = "G90 (use absolute coordinates)";
-		public static string GCODE_STD_PASSES = ";(Uncomment if you want to sink Z axis)\r\n;G91 (use relative coordinates)\r\n;G0 Z-1 (sinks the Z axis, 1mm)\r\n;G90 (use absolute coordinates)";
+		public static string GCODE_STD_HEADER = ";LaserGRBL\r\n; GRBL device profile\r\n;Bounds: X[left] Y[bottom] to X[right] Y[top]\r\nG00 G17 G40 G21 G54\r\nG90 (use absolute coordinates)";
+        public static string GCODE_STD_PASSES = ";(Uncomment if you want to sink Z axis)\r\n;G91 (use relative coordinates)\r\n;G0 Z-1 (sinks the Z axis, 1mm)\r\n;G90 (use absolute coordinates)";
 		public static string GCODE_STD_FOOTER = "G0 X0 Y0 Z0 (move back to origin)";
 
 		private static string CH340Version;
