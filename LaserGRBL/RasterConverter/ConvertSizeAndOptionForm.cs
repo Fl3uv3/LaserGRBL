@@ -148,10 +148,19 @@ namespace LaserGRBL.RasterConverter
 			IIBorderTracing.Visible = LblBorderTracing.Visible = LblBorderTracingmm.Visible = (IP.SelectedTool == ImageProcessor.Tool.Vectorize || IP.SelectedTool == ImageProcessor.Tool.Centerline);
 			LblLinearFilling.Text = IP.SelectedTool == ImageProcessor.Tool.Vectorize ? "Filling Speed" : "Engraving Speed";
 
-			IIOffsetX.CurrentValue = IP.TargetOffset.X = Settings.GetObject("GrayScaleConversion.Gcode.Offset.X", 0F);
-			IIOffsetY.CurrentValue = IP.TargetOffset.Y = Settings.GetObject("GrayScaleConversion.Gcode.Offset.Y", 0F);
+			if (IP.TargetOrigin.X != 0 && IP.TargetOrigin.Y != 0)
+			{
+                IIOffsetX.CurrentValue = IP.TargetOrigin.X;
+                IIOffsetY.CurrentValue = IP.TargetOrigin.Y;
+                CbAutosize.Checked = true;
+            }
+			else
+			{
+                IIOffsetX.CurrentValue = Settings.GetObject("GrayScaleConversion.Gcode.Offset.X", 0F);
+                IIOffsetY.CurrentValue = Settings.GetObject("GrayScaleConversion.Gcode.Offset.Y", 0F);
+            }
 
-			RefreshPerc();
+            RefreshPerc();
 			ShowDialog(parent);
 
 			ratiolock = KeepSizeRatio;
@@ -305,6 +314,7 @@ namespace LaserGRBL.RasterConverter
 		{
 			IISizeH.Enabled = IISizeW.Enabled = !CbAutosize.Checked;
 			IIDpi.Enabled = CbAutosize.Checked;
+			IIDpi.CurrentValue = IP.FileDPI;
 
 			ComputeDpiSize();
 		}
@@ -369,14 +379,14 @@ namespace LaserGRBL.RasterConverter
 
 		private void BtnReset_Click(object sender, EventArgs e)
 		{
-			IIOffsetY.CurrentValue = 0;
 			IIOffsetX.CurrentValue = 0;
+			IIOffsetY.CurrentValue = 0;
 		}
 
 		private void BtnCenter_Click(object sender, EventArgs e)
 		{
-			IIOffsetY.CurrentValue = -(IISizeH.CurrentValue / 2);
 			IIOffsetX.CurrentValue = -(IISizeW.CurrentValue / 2);
+			IIOffsetY.CurrentValue = -(IISizeH.CurrentValue / 2);
 		}
 
 		private void BtnUnlockProportion_Click(object sender, EventArgs e)
@@ -397,25 +407,25 @@ namespace LaserGRBL.RasterConverter
 
         private void BtnCTargetTL_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = 0;
-            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue;
+            IIOffsetX.CurrentValue = IP.TargetOrigin.X;
+            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue - IP.TargetOrigin.Y;
         }
 
         private void BtnCTargetTM_Click(object sender, EventArgs e)
         {
             IIOffsetX.CurrentValue = ((float)GrblCore.Configuration.TableWidth / 2) - (IISizeW.CurrentValue / 2);
-            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue;
+            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue - IP.TargetOrigin.Y;
         }
 
         private void BtnCTargetTR_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue;
-            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue;
+            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue - IP.TargetOrigin.X;
+            IIOffsetY.CurrentValue = (float)GrblCore.Configuration.TableHeight - IISizeH.CurrentValue - IP.TargetOrigin.Y;
         }
 
         private void BtnCTargetML_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = 0;
+            IIOffsetX.CurrentValue = IP.TargetOrigin.X;
             IIOffsetY.CurrentValue = ((float)GrblCore.Configuration.TableHeight / 2) - (IISizeH.CurrentValue / 2);
         }
 
@@ -427,26 +437,26 @@ namespace LaserGRBL.RasterConverter
 
         private void BtnCTargetMR_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue;
+            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue - IP.TargetOrigin.X;
             IIOffsetY.CurrentValue = ((float)GrblCore.Configuration.TableHeight / 2) - (IISizeH.CurrentValue / 2);
         }
 
         private void BtnCTargetBL_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = 0;
-            IIOffsetY.CurrentValue = 0;
+            IIOffsetX.CurrentValue = IP.TargetOrigin.X;
+            IIOffsetY.CurrentValue = IP.TargetOrigin.Y;
         }
 
         private void BtnCTargetBM_Click(object sender, EventArgs e)
         {
             IIOffsetX.CurrentValue = ((float)GrblCore.Configuration.TableWidth/2) - (IISizeW.CurrentValue/2);
-            IIOffsetY.CurrentValue = 0;
+            IIOffsetY.CurrentValue = IP.TargetOrigin.Y;
         }
 
         private void BtnCTargetBR_Click(object sender, EventArgs e)
         {
-            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue;
-            IIOffsetY.CurrentValue = 0;
+            IIOffsetX.CurrentValue = (float)GrblCore.Configuration.TableWidth - IISizeW.CurrentValue - IP.TargetOrigin.X;
+            IIOffsetY.CurrentValue = IP.TargetOrigin.Y; 
         }
     }
 }

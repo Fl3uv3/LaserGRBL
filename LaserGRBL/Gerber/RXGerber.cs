@@ -22,7 +22,7 @@ namespace CRXGerber
         //private bool m_IsAbsolute;
 
         private float[] m_FormatRatio;
-        private bool m_IsInch;
+        public bool m_IsInch;
 
         //private bool m_IsLinear;
         //private bool m_IsClockWise;
@@ -32,8 +32,8 @@ namespace CRXGerber
         //private bool m_IsEOF;
         private float m_MaxX;
         private float m_MaxY;
-        private float m_MinX;
-        private float m_MinY;
+        public float m_MinX;
+        public float m_MinY;
         private float m_SizeX;
         private float m_SizeY;
         private Color m_ClearColor;

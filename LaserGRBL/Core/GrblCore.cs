@@ -4,6 +4,7 @@
 // This program is distributed in the hope that it will be useful, but  WITHOUT ANY WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GPLv3  General Public License for more details.
 // You should have received a copy of the GPLv3 General Public License  along with this program; if not, write to the Free Software  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,  USA. using System;
 
+using LaserGRBL.RasterConverter;
 using Sound;
 using System;
 using System.Collections.Generic;
@@ -811,7 +812,17 @@ namespace LaserGRBL
                     try
                     {
                         Settings.SetObject("Core.LastOpenFile", bmpname);
-                        RasterConverter.RasterToLaserForm.CreateAndShowDialog(this, bmpname, append);
+
+                        PointF MMOrigin = new PointF(m_Gerber.m_MinX, m_Gerber.m_MinY);
+                                               
+						if (!m_Gerber.m_IsInch)
+						{
+                            MMOrigin.X *= 0.0254f;
+                            MMOrigin.Y *= 0.0254f;
+                        }
+
+                        RasterConverter.RasterToLaserForm.CreateAndShowDialog(this, bmpname, append, MMOrigin);
+
                         UsageCounters.RasterFile++;
                         if (System.IO.File.Exists(bmpname))
                             System.IO.File.Delete(bmpname);
